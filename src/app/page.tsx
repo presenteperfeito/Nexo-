@@ -9,10 +9,12 @@ import {
   Upload, Link, MessageCircle, ThumbsUp, Send, Bell,
   Moon, Sun, Volume2, VolumeX, Home, CheckCircle2,
   Circle, AlertCircle, Calendar as CalendarIcon,
-  ArrowRight, Zap, Activity, Focus, Menu, X
+  ArrowRight, Zap, Activity, Focus, Menu, X, LogOut
 } from 'lucide-react';
 import { NexoInput, NexoTextArea } from '@/components/NexoField';
 import { SharedProfileForm } from '@/components/SharedProfileForm';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 // Tipos de dados
 interface User {
@@ -144,6 +146,10 @@ const PreferenciasContext = createContext<{
 } | null>(null);
 
 export default function StudyApp() {
+  // Hook de autenticação
+  const { user: authUser, signOut } = useAuth();
+  const router = useRouter();
+
   // ESTADO GLOBAL DE PREFERÊNCIAS
   const [preferencias, setPreferencias] = useState<PreferenciasUsuario>(() => {
     if (typeof window !== 'undefined') {
@@ -1220,6 +1226,14 @@ export default function StudyApp() {
       setIsSidebarOpen(false);
     };
 
+    const handleLogout = async () => {
+      await signOut();
+      router.push('/login');
+    };
+
+    // Obter nome do usuário real do Supabase
+    const displayName = authUser?.user_metadata?.name || authUser?.email || 'Usuário';
+
     return (
       <>
         {/* Overlay para mobile */}
@@ -1234,7 +1248,7 @@ export default function StudyApp() {
         <nav className={`
           fixed md:static top-0 left-0 z-50 
           bg-[#050B1A] border-r border-[#111827] 
-          w-64 h-full p-4
+          w-64 h-full p-4 flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
@@ -1246,7 +1260,9 @@ export default function StudyApp() {
               </div>
               <div>
                 <h1 className="text-white font-bold text-lg">Nexo</h1>
-                <p className="text-[#B3B3B3] text-sm">Olá, {user?.name}</p>
+                <p className="text-[#B3B3B3] text-sm truncate max-w-[120px]" title={displayName}>
+                  Olá, {displayName}
+                </p>
               </div>
             </div>
             
@@ -1260,7 +1276,7 @@ export default function StudyApp() {
           </div>
 
           {/* Itens de navegação */}
-          <div className="space-y-2">
+          <div className="space-y-2 flex-1">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -1280,6 +1296,17 @@ export default function StudyApp() {
                 )}
               </button>
             ))}
+          </div>
+
+          {/* Botão de Logout */}
+          <div className="mt-auto pt-4 border-t border-[#111827]">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Sair</span>
+            </button>
           </div>
         </nav>
       </>
